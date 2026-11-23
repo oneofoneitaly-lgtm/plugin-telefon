@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * GUI helpers. The phone is drawn entirely through the inventory title:
  * <ul>
- *   <li>font {@code aphone:gui}: glyph  = full phone texture (176x252, covers the whole 9x5
+ *   <li>font {@code aphone:gui}: glyph  = full phone texture (176x230, covers the whole 9x4
  *       chest AND the player inventory area) + negative/positive space characters</li>
  *   <li>fonts {@code aphone:status/clock/line1/line2/line3}: the vanilla ascii.png drawn at other heights
  *       and positions, used for the live status-bar clock and the big lock-screen widget</li>
@@ -34,14 +34,21 @@ public final class Gui {
     public static final String BG_APP = "\uE000";
     /** Home screen background (app labels + dock). */
     public static final String BG_HOME = "\uE001";
-    /** both backgrounds are 176 px wide -> advance 177 */
+    /** both backgrounds are 176 px wide (a 1px almost invisible pixel at x=175) -> advance 177 */
     private static final int BACKGROUND_ADVANCE = 177;
 
     private Gui() {}
 
+    /** X (GUI px) of the status-bar clock. */
+    private static final int STATUS_X = 45;
+
     /**
      * Builds the inventory title that draws the whole phone.
-     * @param appName header text (null/empty on the home screen)
+     * The dispenser screen CENTERS its title, so the components are built to have a total
+     * width of exactly 0: the title then starts at x=88 and every position is known.
+     * (Only glyphs with exact known widths are used: spaces, the background and the status digits.)
+     *
+     * @param appName plain title used without the resource pack
      * @param home    true = home background
      * @param status  status bar clock, e.g. "12:30"
      */
@@ -49,16 +56,18 @@ public final class Gui {
         if (!plugin.getConfig().getBoolean("gui.custom-background", true)) {
             return Component.text("\u260E APhone" + (home ? "" : " \u00BB " + appName));
         }
-        Component out = Component.text(spaces(-8) + (home ? BG_HOME : BG_APP)).font(FONT_GUI).color(NamedTextColor.WHITE);
-        int x = BACKGROUND_ADVANCE; // current x after the glyph (title starts at x=8, we shifted -8)
-        // status bar clock (left)
-        out = out.append(Component.text(spaces(14 - x)).font(FONT_GUI));
-        out = out.append(Component.text(status.replaceAll("[^\\x20-\\x7E]", "")).font(FONT_STATUS).color(NamedTextColor.WHITE));
-        x = 14 + width(status);
-        if (!home && appName != null && !appName.isEmpty()) {
-            out = out.append(Component.text(spaces(12 - x)).font(FONT_GUI));
-            out = out.append(Component.text(appName).font(FONT_DEFAULT).color(NamedTextColor.WHITE));
-        }
+        String time = status.replaceAll("[^0-9:]", "");
+        int x = 88;                                     // title start (centered, total width 0)
+        StringBuilder gui = new StringBuilder();
+        gui.append(spaces(-x));                         // -> x = 0
+        gui.append(home ? BG_HOME : BG_APP);            // phone, advance 177
+        x = BACKGROUND_ADVANCE;
+        gui.append(spaces(STATUS_X - x));               // -> status bar
+        x = STATUS_X;
+        Component out = Component.text(gui.toString()).font(FONT_GUI).color(NamedTextColor.WHITE);
+        out = out.append(Component.text(time).font(FONT_STATUS).color(NamedTextColor.WHITE));
+        x += statusWidth(time);
+        out = out.append(Component.text(spaces(88 - x)).font(FONT_GUI)); // back to start: total width 0
         return out;
     }
 
@@ -78,6 +87,13 @@ public final class Gui {
             }
         }
         return sb.toString();
+    }
+
+    /** Width of the status-bar pixel font (assets/aphone/textures/font/status.png): digits 3px, ':' 1px, +1 spacing. */
+    public static int statusWidth(String s) {
+        int w = 0;
+        for (char c : s.toCharArray()) w += c == ':' ? 2 : 4;
+        return w;
     }
 
     /** Width in GUI pixels of a string in the vanilla font scaled by {@code scale}. */

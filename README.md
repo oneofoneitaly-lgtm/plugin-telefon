@@ -3,7 +3,7 @@
 **Made by [@Adryh01](https://github.com/Adryh01)**
 
 A full smartphone for **Paper / Purpur 1.21.1** servers with its own **resource pack**.
-The phone uses a **custom 9x5 inventory** fully covered by the phone texture: the player's
+The phone is a **narrow, real-phone-shaped screen** in the middle of the window: the player's
 own inventory is hidden, you only see the phone — status bar with live clock, a real-phone
 **home screen** (app grid with labels + dock at the bottom) and full-screen apps.
 
@@ -106,12 +106,13 @@ python3 tools/render_previews.py
 
 ## 🎨 How the full-screen phone works
 
-- The GUI is a **9x5 chest** (45 slots). The title uses font `aphone:gui`: glyph `\uE001` (home) or `\uE000` (apps)
-  draws a **176×252** phone starting 24 px above the chest, covering the whole window, player inventory area included
-- While the phone is open the player's inventory is saved (`plugins/APhone/backups/`) and emptied, and its slots
-  become part of the phone: the 3 inventory rows are extra screen space, the **hotbar row is the dock / bottom bar**.
-  Phone icons are tagged and can never leave the phone
-- Font `aphone:status` reuses vanilla `ascii.png` to write the live clock in the status bar
+- The window is a **dispenser**: the pack makes `dispenser.png` transparent, so only the phone is drawn
+  (side effect: real dispensers/droppers open without the grey background, they still work normally)
+- The title uses font `aphone:gui`: glyph `\uE001` (home) or `\uE000` (apps) draws the phone over the 5 middle columns.
+  The dispenser centers its title, so the title is built with a total width of 0 to keep positions exact
+- Phone slots: dispenser 3x3 (top) + the middle 5 columns of the hidden player inventory + hotbar (= dock / bottom bar).
+  The player's items are saved in `plugins/APhone/backups/` and always given back; phone icons can never leave the phone
+- Font `aphone:status` (own pixel digits) writes the live clock in the status bar
 - Home app labels are drawn in `phone_home.png` (positions in `tools/generate_pack.py` → `HOME_LABELS`, must match `HomeMenu.java`)
 - The resource pack sets `container.inventory` to empty, hiding the vanilla "Inventory" label
 - Phone item → `PAPER` + `custom_model_data 1001` (3D model) · icons → `2001…2033` · `pack_format 34`

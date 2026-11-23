@@ -8,11 +8,13 @@ import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,25 +25,27 @@ import java.util.function.Function;
 /**
  * Base phone screen.
  * <p>
- * Full-screen mode (resource pack + hide-player-inventory): the window is a 9x5 chest and the
- * player's inventory is hidden, so the phone uses ALL the slots of the window:
+ * Phone mode (resource pack + hide-player-inventory): the window is a DISPENSER (its texture is made
+ * transparent by the resource pack) and the player's inventory is hidden, so only a narrow,
+ * real-phone-shaped screen is visible over the 5 middle columns:
  * <pre>
- *  raw 0..44   chest rows 0-4        (top of the screen)
- *  raw 45..71  player inventory rows (middle of the screen)
- *  raw 72..80  hotbar row            (bottom bar / dock)
+ *            col 2  3  4  5  6
+ *  raw 0..8      [ 3x3 dispenser ]      top of the screen   (x 62..115)
+ *  raw 9..35     player inventory rows  middle              (only cols 2-6 are on the phone)
+ *  raw 36..44    hotbar                 dock / bottom bar   (only cols 2-6 are on the phone)
  * </pre>
- * Without full-screen the bottom bar falls back to chest row 4.
+ * Without phone mode a normal 6-row chest is used (bottom bar = row 5).
  *
  * APhone by @Adryh01
  */
 public abstract class Menu implements InventoryHolder {
 
-    public static final int SIZE = 45;
-
     protected final APhone plugin;
     protected final Player player;
     protected final PhoneData data;
-    protected final boolean fullScreen;
+    protected final boolean phoneMode;
+    /** number of slots of the top inventory */
+    protected final int size;
     protected int page;
 
     /** Bottom bar slots (raw slot ids). */
@@ -56,27 +60,34 @@ public abstract class Menu implements InventoryHolder {
         this.plugin = plugin;
         this.player = player;
         this.data = plugin.data().get(player);
-        this.fullScreen = plugin.hider().enabled();
-        BACK = bar(0);
-        PREV = bar(2);
+        this.phoneMode = plugin.hider().enabled();
+        this.size = phoneMode ? 9 : 54;
+        BACK = bar(2);
+        PREV = bar(3);
         HOME = bar(4);
-        NEXT = bar(6);
-        ACTION = bar(8);
-        if (fullScreen) {
-            screen = new int[72]; // chest 0..44 + player rows 45..71
-            for (int i = 0; i < 72; i++) screen[i] = i;
+        NEXT = bar(5);
+        ACTION = bar(6);
+        List<Integer> s = new ArrayList<>();
+        if (phoneMode) {
+            for (int i = 0; i < 9; i++) s.add(i);                       // dispenser 3x3
+            for (int r = 0; r < 3; r++) for (int c = 2; c <= 6; c++) s.add(9 + r * 9 + c); // inventory, cols 2-6
         } else {
-            screen = new int[36];
-            for (int i = 0; i < 36; i++) screen[i] = i;
+            for (int i = 0; i < 45; i++) s.add(i);
         }
+        screen = s.stream().mapToInt(Integer::intValue).toArray();
     }
 
-    /** Raw slot of column {@code col} in the bottom bar. */
+    /** Raw slot of column {@code col} (0-8) in the bottom bar. */
     protected int bar(int col) {
-        return fullScreen ? 72 + col : 36 + col;
+        return phoneMode ? 36 + col : 45 + col;
     }
 
-    /** App name shown in the header. */
+    /** Raw slot of the hidden player inventory, row 0-2, column 0-8 (phone mode). */
+    protected int inv(int row, int col) {
+        return phoneMode ? 9 + row * 9 + col : 9 + row * 9 + col;
+    }
+
+    /** App name (used as plain title without the resource pack). */
     protected abstract String title();
 
     protected abstract void build();
@@ -88,7 +99,10 @@ public abstract class Menu implements InventoryHolder {
 
     public void open() {
         plugin.hider().hide(player);
-        inventory = Bukkit.createInventory(this, SIZE, Gui.title(plugin, title(), isHome(), clock(player.getWorld())));
+        var title = Gui.title(plugin, title(), isHome(), clock(player.getWorld()));
+        inventory = phoneMode
+                ? Bukkit.createInventory(this, InventoryType.DISPENSER, title)
+                : Bukkit.createInventory(this, 54, title);
         refresh();
         player.openInventory(inventory);
     }
@@ -115,12 +129,12 @@ public abstract class Menu implements InventoryHolder {
     }
 
     protected void set(int raw, ItemStack item, Consumer<ClickType> action) {
-        if (raw < SIZE) {
+        if (raw < size) {
             inventory.setItem(raw, item);
         } else {
             // player inventory part: only when it is hidden (never overwrite real items)
             if (!plugin.hider().isHidden(player)) return;
-            int index = raw < 72 ? raw - 45 + 9 : raw - 72;
+            int index = raw < size + 27 ? raw - size + 9 : raw - size - 27;
             player.getInventory().setItem(index, item);
         }
         if (action != null) actions.put(raw, action);

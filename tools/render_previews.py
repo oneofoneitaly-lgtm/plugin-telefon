@@ -23,17 +23,17 @@ def icon(name):
     return Image.open(os.path.join(TEX, "item", "icon", name + ".png")).convert("RGBA")
 
 
-TOP = -24  # glyph starts 24px above the GUI
+TOP = -28  # glyph starts 28px above the GUI (dispenser window)
 
 
 def slot_pos(raw):
-    if raw < 45:
-        r, c = divmod(raw, 9)
-        return 8 + c * 18, 18 + r * 18
-    if raw < 72:
-        r, c = divmod(raw - 45, 9)
-        return 8 + c * 18, 121 + r * 18
-    return 8 + (raw - 72) * 18, 179
+    if raw < 9:
+        r, c = divmod(raw, 3)
+        return 62 + c * 18, 17 + r * 18
+    if raw < 36:
+        r, c = divmod(raw - 9, 9)
+        return 8 + c * 18, 84 + r * 18
+    return 8 + (raw - 36) * 18, 142
 
 
 def screen(title, items, hover=None, tooltip=None, home=False, status="12:30"):
@@ -50,7 +50,7 @@ def screen(title, items, hover=None, tooltip=None, home=False, status="12:30"):
         base = Image.alpha_composite(base, ov)
     big_img = base.resize((W * K, H * K), Image.NEAREST)
 
-    cw, ch = W * K + 700, H * K + 80
+    cw, ch = W * K + 300, H * K + 80
     canvas = Image.new("RGBA", (cw, ch))
     cd = ImageDraw.Draw(canvas)
     for y in range(ch):
@@ -60,9 +60,13 @@ def screen(title, items, hover=None, tooltip=None, home=False, status="12:30"):
     canvas.alpha_composite(big_img, (ox, oy))
     d = ImageDraw.Draw(canvas)
     f = font(30)
-    d.text((ox + 14 * K, oy + (-16 - TOP) * K - 4), status, font=f, fill=(255, 255, 255))
-    if not home:
-        d.text((ox + 12 * K, oy + (6 - TOP) * K - 4), title, font=f, fill=(255, 255, 255))
+    sf = Image.open(os.path.join(TEX, "font", "status.png")).convert("RGBA")
+    sx = 45
+    for sc in status:
+        i = "0123456789:".index(sc)
+        g = sf.crop((i * 4, 0, i * 4 + 4, 5)).resize((4 * K, 5 * K), Image.NEAREST)
+        canvas.alpha_composite(g, (ox + sx * K, oy + (-21 - TOP) * K))
+        sx += 2 if sc == ":" else 4
 
     if tooltip and hover is not None:
         x, y = slot_pos(hover)
@@ -86,27 +90,26 @@ AQUA, WHITE, GRAY, GREEN, YELLOW, GOLD, RED = (85, 255, 255), (255, 255, 255), (
 
 phone_tex = Image.open(os.path.join(TEX, "item", "phone.png")).convert("RGBA")
 
-home_items = {1: "app_flashlight", 3: "app_weather", 5: "app_notes", 7: "app_calculator",
-              19: "app_emergency", 21: "app_settings",
-              73: "app_phone", 75: "app_messages", 77: "app_contacts", 79: "app_gps"}
+home_items = {0: "app_gps", 2: "app_weather", 6: "app_notes", 8: "app_calculator",
+              11: "app_flashlight", 13: "app_settings", 15: "app_emergency", 38: "app_phone", 40: "app_messages", 42: "app_contacts"}
 screen("Home", home_items, home=True).save(os.path.join(OUT, "home.png"))
-screen("Home", home_items, home=True, hover=75, tooltip=[("Messages (2)", AQUA), ("Read and send SMS", GRAY)]
+screen("Home", home_items, home=True, hover=40, tooltip=[("Messages (2)", AQUA), ("Read and send SMS", GRAY)]
        ).save(os.path.join(OUT, "home_hover.png"))
 
-contacts = {i: "contact" for i in range(0, 14)}
-contacts.update({72: "back", 76: "home", 80: "add"})
+contacts = {i: "contact" for i in range(0, 9)}
+contacts.update({11: "contact", 12: "contact", 13: "contact", 38: "back", 40: "home", 42: "add"})
 screen("Contacts", contacts, hover=1, tooltip=[
     ("Steve_Gamer", WHITE), ("555-4821", GRAY), ("\u25CF Online", GREEN), ("", WHITE),
     ("Left-click to call", YELLOW), ("Right-click to send SMS", YELLOW), ("Shift+Right to delete", YELLOW)]
     ).save(os.path.join(OUT, "contacts.png"))
 
-msgs = {0: "sms", 1: "sms", 2: "sms", 3: "sms", 4: "sms", 72: "back", 76: "home", 80: "add"}
+msgs = {0: "sms", 1: "sms", 2: "sms", 3: "sms", 38: "back", 40: "home", 42: "add"}
 screen("Messages", msgs, hover=0, tooltip=[
     ("Alex", AQUA), ("555-1093 \u2022 2m ago", GRAY), ("", WHITE), ("Meet me at spawn in 5", WHITE),
     ("minutes, bring diamonds!", WHITE), ("", WHITE), ("Left-click to reply", YELLOW), ("Right-click to delete", YELLOW)]
     ).save(os.path.join(OUT, "messages.png"))
 
-settings = {12: "toggle_off", 14: "app_settings", 31: "info", 72: "back", 76: "home"}
+settings = {12: "toggle_off", 14: "app_settings", 31: "info", 38: "back", 40: "home"}
 screen("Settings", settings, hover=14, tooltip=[
     ("Ringtone", WHITE), ("Current: Classic", AQUA), ("", WHITE), ("Left-click next ringtone", YELLOW),
     ("Right-click preview", YELLOW)]).save(os.path.join(OUT, "settings.png"))

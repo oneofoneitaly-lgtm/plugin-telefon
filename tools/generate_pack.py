@@ -327,12 +327,22 @@ def write_models():
 
 
 # ---------------------------------------------------------------- GUI background
-# The chest is 9x5 (45 slots). Vanilla 5-row chest GUI = 176 x 204 px (incl. player inventory).
-# Our glyph is 176 x 252 and starts 24 px ABOVE the GUI, so it covers everything
-# (chest + player inventory area) and looks like a tall phone.
-GUI_W, GUI_H = 176, 252
-TOP = -24             # GUI y of the first glyph row
+# The phone window is a DISPENSER (176 x 166 GUI). Its texture is replaced by a transparent one
+# (assets/minecraft/textures/gui/container/dispenser.png), so only our narrow phone is visible.
+# Slots on the phone (5 middle columns):
+#   dispenser 3x3 : x 62/80/98,           y 17/35/53     raw 0..8
+#   inventory     : x 44..116 (cols 2-6), y 84/102/120   raw 9..35
+#   hotbar (dock) : x 44..116 (cols 2-6), y 142          raw 36..44
+# The glyph is 176 x GUI_H and starts TOP px above the GUI.
+# NOTE: in a bitmap font "ascent" can never be bigger than "height".
+GUI_W = 176
+TOP = -28
+GUI_H = 212           # -> bottom at GUI y 183
 ASCENT = 13 - TOP     # title text top is at y=6 with ascent 7 -> glyph top = 13 - ascent
+BODY = (36, 140)      # phone body x range
+DISP_Y = [17, 35, 53]
+INV_Y = [84, 102, 120]
+HOTBAR_Y = 142
 
 
 def gy(y):
@@ -340,23 +350,25 @@ def gy(y):
     return y - TOP
 
 
-# Slot y positions in a 5-row chest window (vanilla ChestMenu):
-CHEST_ROWS_Y = [18, 36, 54, 72, 90]          # raw slots 0..44
-PLAYER_ROWS_Y = [121, 139, 157]              # raw slots 45..71 (hidden player inventory)
-HOTBAR_Y = 179                               # raw slots 72..80 (bottom bar / dock)
-
-
 def slot_x(col):
     return 8 + col * 18
 
 
-# Home labels: (column, chest row, text) - MUST match HomeMenu.java
-HOME_LABELS = [(1, 0, "Light"), (3, 0, "Weather"), (5, 0, "Notes"), (7, 0, "Calc"),
-               (1, 2, "911"), (3, 2, "Settings")]
+def disp_x(col):
+    return 62 + col * 18
+
+
+# Home labels: (center x, icon y, text) - MUST match HomeMenu.java
+HOME_LABELS = [
+    (disp_x(0) + 8, DISP_Y[0], "Maps"), (disp_x(2) + 8, DISP_Y[0], "Weather"),
+    (disp_x(0) + 8, DISP_Y[2], "Notes"), (disp_x(2) + 8, DISP_Y[2], "Calc"),
+    (slot_x(2) + 8, INV_Y[0], "Light"), (slot_x(4) + 8, INV_Y[0], "Settings"), (slot_x(6) + 8, INV_Y[0], "911"),
+]
 
 # tiny pixel font (rows 0-4 = body, row 5 = descender)
 PIX = {
     "L": ["#..", "#..", "#..", "#..", "###"],
+    "M": ["#...#", "##.##", "#.#.#", "#...#", "#...#"],
     "i": ["#", ".", "#", "#", "#"],
     "g": ["...", ".##", "#.#", ".##", "..#", "##."],
     "h": ["#..", "#..", "##.", "#.#", "#.#"],
@@ -364,6 +376,7 @@ PIX = {
     "W": ["#...#", "#...#", "#.#.#", "#.#.#", ".#.#."],
     "e": ["...", ".#.", "#.#", "##.", ".##"],
     "a": ["...", "##.", ".##", "#.#", "###"],
+    "p": ["...", "##.", "#.#", "#.#", "##.", "#.."],
     "r": ["...", "#.#", "##.", "#..", "#.."],
     "N": ["#...#", "##..#", "#.#.#", "#..##", "#...#"],
     "o": ["...", ".#.", "#.#", "#.#", ".#."],
@@ -390,9 +403,8 @@ def pix_text(img, cx, y, text):
         for ry, row in enumerate(g):
             for rx, v in enumerate(row):
                 if v == "#":
-                    if 0 <= y + ry + 1 < img.height:  # soft shadow
-                        r, gg, b, a = px[x + rx + 1, y + ry + 1]
-                        px[x + rx + 1, y + ry + 1] = (r // 2, gg // 2, b // 2, a)
+                    r, gg, b, a = px[x + rx + 1, y + ry + 1]
+                    px[x + rx + 1, y + ry + 1] = (r // 2, gg // 2, b // 2, a)
         for ry, row in enumerate(g):
             for rx, v in enumerate(row):
                 if v == "#":
@@ -402,14 +414,15 @@ def pix_text(img, cx, y, text):
 
 def phone_base():
     img = Image.new("RGBA", (GUI_W, GUI_H), (0, 0, 0, 0))
+    bx0, bx1 = BODY
     body = Image.new("RGBA", (GUI_W, GUI_H), (0, 0, 0, 0))
     bd = ImageDraw.Draw(body)
-    bd.rounded_rectangle((0, 0, GUI_W - 1, GUI_H - 1), radius=22, fill=hexc("#111114"))
-    bd.rounded_rectangle((0, 0, GUI_W - 1, GUI_H - 1), radius=22, outline=hexc("#3B3B45"))
-    bd.rounded_rectangle((1, 1, GUI_W - 2, GUI_H - 2), radius=21, outline=hexc("#24242B"))
+    bd.rounded_rectangle((bx0, 0, bx1, GUI_H - 1), radius=16, fill=hexc("#111114"))
+    bd.rounded_rectangle((bx0, 0, bx1, GUI_H - 1), radius=16, outline=hexc("#3B3B45"))
+    bd.rounded_rectangle((bx0 + 1, 1, bx1 - 1, GUI_H - 2), radius=15, outline=hexc("#24242B"))
     img = Image.alpha_composite(img, body)
 
-    sx0, sy0, sx1, sy1 = 5, gy(-19), GUI_W - 6, gy(222)
+    sx0, sy0, sx1, sy1 = bx0 + 3, 3, bx1 - 3, GUI_H - 4
     sw, sh = sx1 - sx0 + 1, sy1 - sy0 + 1
     wall = Image.new("RGBA", (sw, sh))
     wp = wall.load()
@@ -420,52 +433,55 @@ def phone_base():
             wp[x, y] = lerp(c1, c2, t / 0.5) if t < 0.5 else lerp(c2, c3, (t - 0.5) / 0.5)
     glow = Image.new("RGBA", (sw, sh), (0, 0, 0, 0))
     gd = ImageDraw.Draw(glow)
-    gd.ellipse((-40, 120, 90, 260), fill=(236, 72, 153, 80))
-    gd.ellipse((90, -20, 220, 110), fill=(99, 102, 241, 90))
-    gd.ellipse((60, 150, 200, 260), fill=(251, 146, 60, 50))
-    glow = glow.filter(ImageFilter.GaussianBlur(14))
+    gd.ellipse((-30, 110, 60, 220), fill=(236, 72, 153, 80))
+    gd.ellipse((50, -20, 140, 80), fill=(99, 102, 241, 90))
+    gd.ellipse((30, 140, 130, 230), fill=(251, 146, 60, 50))
+    glow = glow.filter(ImageFilter.GaussianBlur(12))
     wall = Image.alpha_composite(wall, glow)
     mask = Image.new("L", (sw, sh), 0)
-    ImageDraw.Draw(mask).rounded_rectangle((0, 0, sw - 1, sh - 1), radius=17, fill=255)
+    ImageDraw.Draw(mask).rounded_rectangle((0, 0, sw - 1, sh - 1), radius=13, fill=255)
     img.paste(wall, (sx0, sy0), mask)
 
     ov = Image.new("RGBA", (GUI_W, GUI_H), (0, 0, 0, 0))
     od = ImageDraw.Draw(ov)
     W = (255, 255, 255, 235)
-    od.rounded_rectangle((66, gy(-17), 109, gy(-9)), radius=4, fill=(0, 0, 0, 255))
-    od.ellipse((101, gy(-15), 105, gy(-11)), fill=hexc("#1E2A44"))
-    for i, h in enumerate((2, 3, 4, 5)):
-        od.rectangle((133 + i * 2, gy(-9) - h, 133 + i * 2, gy(-9)), fill=W)
-    od.rectangle((144, gy(-15), 153, gy(-9)), outline=W)
-    od.rectangle((154, gy(-13), 154, gy(-11)), fill=W)
-    od.rectangle((146, gy(-13), 151, gy(-11)), fill=hexc("#34C759"))
-    # bottom bar / dock around the hotbar row
-    od.rounded_rectangle((6, gy(HOTBAR_Y - 5), GUI_W - 7, gy(HOTBAR_Y + 20)), radius=9, fill=(255, 255, 255, 46))
-    od.rounded_rectangle((6, gy(HOTBAR_Y - 5), GUI_W - 7, gy(HOTBAR_Y + 20)), radius=9, outline=(255, 255, 255, 40))
-    od.rounded_rectangle((64, gy(213), 111, gy(215)), radius=1, fill=(255, 255, 255, 200))
+    cx = (bx0 + bx1) // 2
+    # dynamic island
+    od.rounded_rectangle((cx - 13, gy(-24), cx + 13, gy(-17)), radius=3, fill=(0, 0, 0, 255))
+    od.ellipse((cx + 7, gy(-22), cx + 10, gy(-19)), fill=hexc("#1E2A44"))
+    # signal + battery (right); the clock (left, x=45) is live text
+    for i, h in enumerate((1, 2, 3, 4)):
+        od.rectangle((112 + i * 2, gy(-16) - h, 112 + i * 2, gy(-16)), fill=W)
+    od.rectangle((121, gy(-21), 128, gy(-16)), outline=W)
+    od.rectangle((129, gy(-19), 129, gy(-18)), fill=W)
+    od.rectangle((123, gy(-19), 126, gy(-18)), fill=hexc("#34C759"))
+    # dock around the hotbar row (cols 2-6)
+    od.rounded_rectangle((bx0 + 4, gy(HOTBAR_Y - 4), bx1 - 4, gy(HOTBAR_Y + 19)), radius=7, fill=(255, 255, 255, 46))
+    od.rounded_rectangle((bx0 + 4, gy(HOTBAR_Y - 4), bx1 - 4, gy(HOTBAR_Y + 19)), radius=7, outline=(255, 255, 255, 40))
+    # home indicator
+    od.rounded_rectangle((cx - 18, GUI_H - 9, cx + 18, GUI_H - 8), radius=1, fill=(255, 255, 255, 200))
     img = Image.alpha_composite(img, ov)
     d = ImageDraw.Draw(img)
-    d.line((0, gy(20), 0, gy(36)), fill=hexc("#4A4A55"))
-    d.line((0, gy(42), 0, gy(58)), fill=hexc("#4A4A55"))
-    d.line((GUI_W - 1, gy(30), GUI_W - 1, gy(54)), fill=hexc("#4A4A55"))
+    d.line((bx0, gy(16), bx0, gy(30)), fill=hexc("#4A4A55"))
+    d.line((bx0, gy(36), bx0, gy(50)), fill=hexc("#4A4A55"))
+    d.line((bx1, gy(26), bx1, gy(48)), fill=hexc("#4A4A55"))
+    # 1 almost invisible pixel at the far right: keeps the glyph advance at exactly 177
+    img.putpixel((GUI_W - 1, 0), (0, 0, 0, 1))
     return img
 
 
 def build_gui():
-    # app screens: header bar (app name is live text at y=6)
     app = phone_base()
-    ov = Image.new("RGBA", (GUI_W, GUI_H), (0, 0, 0, 0))
-    od = ImageDraw.Draw(ov)
-    od.rounded_rectangle((7, gy(1), GUI_W - 8, gy(16)), radius=5, fill=(0, 0, 0, 80))
-    od.rounded_rectangle((6, gy(17), GUI_W - 7, gy(HOTBAR_Y - 8)), radius=7, fill=(255, 255, 255, 12))
-    app = Image.alpha_composite(app, ov)
     app.save(mk(os.path.join(TEX, "font", "phone_app.png")))
 
-    # home screen: app labels + page dots + dock, no header
     home = phone_base()
-    for col, row, text in HOME_LABELS:
-        pix_text(home, slot_x(col) + 8, gy(CHEST_ROWS_Y[row] + 17), text)
+    for cx, icon_y, text in HOME_LABELS:
+        pix_text(home, cx, gy(icon_y + 17), text)
     home.save(mk(os.path.join(TEX, "font", "phone_home.png")))
+
+    # transparent dispenser texture -> only the phone is visible
+    Image.new("RGBA", (256, 256), (0, 0, 0, 0)).save(
+        mk(os.path.join(PACK, "assets", "minecraft", "textures", "gui", "container", "dispenser.png")))
     return home
 
 
@@ -497,7 +513,32 @@ def text_font(height, top_y):
     ]}
 
 
+STATUS_CHARS = "0123456789:"
+STATUS_CELL_W, STATUS_CELL_H = 4, 40
+STATUS_TOP = -21   # GUI y of the status clock
+DIGITS = {
+    "0": ["###", "#.#", "#.#", "#.#", "###"], "1": [".#.", "##.", ".#.", ".#.", "###"],
+    "2": ["###", "..#", "###", "#..", "###"], "3": ["###", "..#", "###", "..#", "###"],
+    "4": ["#.#", "#.#", "###", "..#", "..#"], "5": ["###", "#..", "###", "..#", "###"],
+    "6": ["###", "#..", "###", "#.#", "###"], "7": ["###", "..#", "..#", "..#", "..#"],
+    "8": ["###", "#.#", "###", "#.#", "###"], "9": ["###", "#.#", "###", "..#", "###"],
+    ":": [".", "#", ".", "#", "."],
+}
+
+
+def build_status_font():
+    img = Image.new("RGBA", (STATUS_CELL_W * len(STATUS_CHARS), STATUS_CELL_H), (0, 0, 0, 0))
+    px = img.load()
+    for i, ch in enumerate(STATUS_CHARS):
+        for ry, row in enumerate(DIGITS[ch]):
+            for rx, v in enumerate(row):
+                if v == "#":
+                    px[i * STATUS_CELL_W + rx, ry] = (255, 255, 255, 255)
+    img.save(mk(os.path.join(TEX, "font", "status.png")))
+
+
 def write_font():
+    build_status_font()
     adv = {}
     for bit in range(8):
         adv[chr(0xF801 + bit)] = -(1 << bit)
@@ -508,8 +549,12 @@ def write_font():
             {"type": "bitmap", "file": "aphone:font/phone_app.png", "height": GUI_H, "ascent": ASCENT, "chars": [""]},
             {"type": "bitmap", "file": "aphone:font/phone_home.png", "height": GUI_H, "ascent": ASCENT, "chars": [""]},
         ]},
-        # live status bar clock (vanilla ascii.png moved into the status bar)
-        "status": text_font(8, -16),
+        # live status bar clock: own 3x5 pixel digits in a tall cell (ascent must be <= height)
+        "status": {"providers": [
+            {"type": "space", "advances": {" ": 3}},
+            {"type": "bitmap", "file": "aphone:font/status.png", "height": STATUS_CELL_H,
+             "ascent": 13 - STATUS_TOP, "chars": [STATUS_CHARS]},
+        ]},
     }
     for name, data in fonts.items():
         with open(mk(os.path.join(PACK, "assets", "aphone", "font", name + ".json")), "w") as f:
