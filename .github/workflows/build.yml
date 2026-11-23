@@ -1,0 +1,51 @@
+name: Build APhone (by @Adryh01)
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Build plugin jar
+        run: mvn -B package --file pom.xml
+
+      - name: Zip resource pack
+        run: |
+          cd resourcepack
+          zip -r ../APhone-ResourcePack.zip . -x '*.DS_Store'
+          cd ..
+          echo "Resource pack SHA-1 (put it in config.yml -> resource-pack.sha1):"
+          sha1sum APhone-ResourcePack.zip
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: APhone
+          path: |
+            target/APhone-*.jar
+            APhone-ResourcePack.zip
+
+      - name: Create release (only on tags like v1.0.0)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            target/APhone-*.jar
+            APhone-ResourcePack.zip
