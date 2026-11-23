@@ -1,0 +1,23 @@
+name: APhone
+version: '${project.version}'
+main: dev.adryh01.aphone.APhone
+api-version: '1.21'
+author: Adryh01
+authors: [Adryh01]
+website: https://github.com/Adryh01
+description: APhone by @Adryh01 - a full smartphone for Minecraft 1.21.1 (calls, SMS, contacts, GPS, flashlight and more).
+commands:
+  aphone:
+    description: Open your APhone
+    usage: /aphone help
+    aliases: [phone, telefono, smartphone]
+permissions:
+  aphone.use:
+    description: Use the phone
+    default: true
+  aphone.emergency.receive:
+    description: Receive 911 emergency alerts
+    default: op
+  aphone.admin:
+    description: Give phones and reload the plugin
+    default: op

@@ -1,0 +1,58 @@
+# ==========================================
+#           APhone - config.yml
+#        Minecraft / Paper 1.21.1
+# ==========================================
+
+phone:
+  # Base item of the phone. The resource pack overrides this item
+  # with custom_model_data. Do NOT change unless you also change the pack.
+  material: PAPER
+  custom-model-data: 1001
+  name: "<white><bold>APhone"
+  lore:
+    - "<gray>Right-click to unlock"
+    - "<dark_gray>Number: <aqua>%number%"
+    - "<dark_gray>by @Adryh01"
+  # Give a phone to players the first time they join
+  give-on-first-join: true
+  # Players can craft the phone (iron + glass + redstone)
+  craftable: true
+
+# Phone numbers look like: 555-1234
+number-prefix: "555"
+
+resource-pack:
+  # Send the pack automatically on join (upload the zip somewhere, e.g. GitHub Releases)
+  enabled: false
+  url: "https://github.com/YOUR-NAME/plugin-telefon/releases/download/v1.0.0/APhone-ResourcePack.zip"
+  # SHA-1 of the zip (optional, leave empty to skip)
+  sha1: ""
+  required: false
+  prompt: "<aqua>This server uses the APhone resource pack!"
+
+gui:
+  # true  = uses the resource pack: phone background drawn with a custom font glyph
+  #         and custom app icons (PAPER + custom_model_data).
+  # false = plain chest GUI with vanilla items (works without the resource pack).
+  custom-background: true
+  # Hides the player's inventory while the phone is open, so only the phone is visible.
+  # Items are saved to plugins/APhone/backups/ and given back when the phone closes
+  # (also after a crash / disconnect / death). Only works with custom-background: true.
+  hide-player-inventory: true
+
+call:
+  # Seconds before an unanswered call is missed
+  ring-timeout: 20
+  # Max call duration in seconds (0 = unlimited)
+  max-duration: 0
+
+sms:
+  # Max messages kept per player inbox
+  inbox-size: 45
+
+emergency:
+  cooldown-seconds: 60
+
+flashlight:
+  # Flashlight gives Night Vision while enabled
+  enabled: true

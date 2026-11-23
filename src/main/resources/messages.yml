@@ -1,0 +1,58 @@
+# All texts use MiniMessage format: https://docs.advntr.dev/minimessage/format.html
+prefix: "<dark_gray>[<aqua>APhone</aqua>]</dark_gray> "
+
+no-permission: "<red>You don't have permission."
+players-only: "<red>Only players can use this."
+need-phone: "<red>You need a phone in your inventory!"
+player-not-found: "<red>No phone found with number <white>%number%</white>."
+reloaded: "<green>APhone reloaded."
+phone-given: "<green>Gave a phone to <white>%player%</white>."
+phone-received: "<green>You received a smartphone! Your number is <aqua>%number%</aqua>."
+your-number: "<gray>Your phone number is <aqua>%number%</aqua>."
+
+call-self: "<red>You can't call yourself."
+call-busy: "<red>The number you dialed is busy."
+call-offline: "<red>The number <white>%number%</white> is unreachable."
+call-silent: "<red>%name% has their phone on silent."
+call-calling: "<gray>Calling <aqua>%name%</aqua> <dark_gray>(%number%)</dark_gray>..."
+call-incoming: "<aqua><bold>INCOMING CALL</bold></aqua> <gray>from</gray> <white>%name%</white> <dark_gray>(%number%)</dark_gray>"
+call-accept-button: "<green><bold>[ACCEPT]</bold></green>"
+call-decline-button: "<red><bold>[DECLINE]</bold></red>"
+call-started: "<green>Call connected with <white>%name%</white>. Your chat now goes to the call. <gray>/aphone hangup</gray> to end."
+call-declined: "<red>%name% declined the call."
+call-missed: "<yellow>Missed call from <white>%name%</white> <dark_gray>(%number%)</dark_gray>."
+call-no-answer: "<red>No answer."
+call-ended: "<gray>Call ended. Duration: <white>%duration%</white>."
+call-none: "<red>You are not in a call."
+call-format: "<dark_aqua>[CALL]</dark_aqua> <white>%name%</white><gray>:</gray> %message%"
+
+sms-type: "<gray>Type your message to <aqua>%name%</aqua> in chat. Type <red>cancel</red> to abort."
+sms-sent: "<green>SMS sent to <white>%name%</white>."
+sms-received: "<aqua>New SMS</aqua> <gray>from</gray> <white>%name%</white><gray>:</gray> %message%"
+sms-cancelled: "<gray>Cancelled."
+
+contact-type-number: "<gray>Type the <aqua>phone number</aqua> of the new contact in chat. Type <red>cancel</red> to abort."
+contact-added: "<green>Contact <white>%name%</white> added."
+contact-removed: "<gray>Contact <white>%name%</white> removed."
+contact-exists: "<red>This contact already exists."
+
+note-type: "<gray>Type your note in chat. Type <red>cancel</red> to abort."
+note-saved: "<green>Note saved."
+calc-type: "<gray>Type a math expression (e.g. <white>12*(3+4)</white>). Type <red>cancel</red> to abort."
+calc-result: "<gray>%expr% <dark_gray>=</dark_gray> <aqua><bold>%result%"
+calc-error: "<red>Invalid expression."
+
+gps-location: "<gray>Your location: <white>X %x% Y %y% Z %z%</white> <dark_gray>(%world%)</dark_gray>"
+gps-shared: "<green>Location shared with <white>%name%</white>."
+gps-received: "<aqua>%name%</aqua> <gray>shared their location:</gray> <white>X %x% Y %y% Z %z%</white> <dark_gray>(%world%)</dark_gray>"
+
+flashlight-on: "<yellow>Flashlight ON"
+flashlight-off: "<gray>Flashlight OFF"
+
+emergency-sent: "<red>Emergency services have been alerted."
+emergency-cooldown: "<red>Wait <white>%seconds%s</white> before calling 911 again."
+emergency-alert: "<dark_red><bold>911</bold></dark_red> <red>Emergency from <white>%name%</white> at <white>%x% %y% %z%</white> (%world%)"
+
+silent-on: "<gray>Silent mode <green>ON"
+silent-off: "<gray>Silent mode <red>OFF"
+ringtone-set: "<gray>Ringtone set to <aqua>%ringtone%"
